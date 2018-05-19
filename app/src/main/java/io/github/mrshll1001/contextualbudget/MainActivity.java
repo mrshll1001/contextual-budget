@@ -23,6 +23,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import io.github.mrshll1001.contextualbudget.Adapter.WalletListAdapter;
 import io.github.mrshll1001.contextualbudget.AsyncTasks.FetchAllWalletsTask;
 import io.github.mrshll1001.contextualbudget.AsyncTasks.InsertWalletsToDatabaseTask;
 import io.github.mrshll1001.contextualbudget.Database.AppDatabase;
@@ -33,6 +34,8 @@ public class MainActivity extends AppCompatActivity
 {
     AppDatabase db;
     private RecyclerView walletRecyclerView;
+    private WalletListAdapter viewAdapter;
+    private RecyclerView.LayoutManager viewLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +48,11 @@ public class MainActivity extends AppCompatActivity
         /* Get application database based on our context  */
         db = AppDatabase.getDatabase(this);
 
-        /* Set up our Recycler View */
-        walletRecyclerView = (RecyclerView) findViewById(R.id.main_wallets_view);
-        walletRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        /* Query for all of our wallets and update the UI */
+        updateUI();
+
+
+
 
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -101,9 +106,31 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
     }
 
+
     private void updateUI()
     {
         new FetchAllWalletsTask(this, db).execute();
+    }
+
+    @Override
+    public void useWallets(List<Wallet> walletList)
+    {
+        populateRecyclerView(walletList);
+    }
+
+    /**
+     * Specifically populates the Recycler view full of wallets when they've been fetched.
+     * @param wallets
+     */
+    private void populateRecyclerView(List<Wallet> wallets)
+    {
+         /* Set up our Recycler View */
+        walletRecyclerView = (RecyclerView) findViewById(R.id.main_wallets_view);
+        viewLayoutManager = new LinearLayoutManager(this);
+        walletRecyclerView.setLayoutManager(viewLayoutManager);
+
+        viewAdapter = new WalletListAdapter(MainActivity.this, wallets);
+        walletRecyclerView.setAdapter(viewAdapter);
     }
 
 
@@ -164,18 +191,5 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    @Override
-    public void useWallets(List<Wallet> walletList)
-    {
-        TextView hello = (TextView) findViewById(R.id.hello_world);
 
-        String text = "";
-        for( Wallet w : walletList)
-        {
-            text = text.concat(w.getName() + w.getUid());
-        }
-
-        hello.setText(text);
-        hello.invalidate();
-    }
 }
